@@ -1,16 +1,20 @@
-import localFont from "next/font/local";
+import TopNavbar from "@/components/TopNavbar";
 import "./globals.css";
+import { Tangerine,Josefin_Sans } from 'next/font/google'
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+export const tangerine = Tangerine({
+  subsets: ['latin'],
+  display: 'swap',
+  weight:['400','700'],
+  variable:'--font-tang'
+})
+
+export const josefin = Josefin_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  weight:['100','200','300','400','500','600','700'],
+  variable:'--font-josef'
+})
 
 export const metadata = {
   title: "Create Next App",
@@ -19,12 +23,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en">      
+      <body>
+        {/* <TopNavbar/> */}
         {children}
-      </body>
+      </body>    
     </html>
   );
 }
