@@ -50,7 +50,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">File Management</h1>
+      <h1 className="text-2xl font-bold mb-4">Sagar Drop</h1>
       <FileUpload onUploadSuccess={() => setError(null)} />
       {error && (
         <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-md">
