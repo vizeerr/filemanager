@@ -48,6 +48,30 @@ export default function Home() {
     }
   }
 
+  const handleRename = async (fileId, newName) => {
+    try {
+      const response = await fetch(`/api/files/${fileId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName }),
+      })
+  
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to rename file')
+      }
+  
+      setFiles((prevFiles) =>
+        prevFiles.map((file) =>
+          file.id === fileId ? { ...file, name: newName } : file
+        )
+      )
+    } catch (error) {
+      console.error('Error renaming file:', error)
+      throw error
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Sagar Drop</h1>
@@ -59,7 +83,8 @@ export default function Home() {
       )}
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {files.map(file => (
-          <FileCard key={file.id} file={file} onDelete={handleDelete} />
+          <FileCard key={file.id} file={file} onDelete={handleDelete} onRename={handleRename} />
+
         ))}
       </div>
     </div>
