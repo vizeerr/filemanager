@@ -1,7 +1,6 @@
-'use client'
-
+"use client"
 import { useState, useEffect } from 'react'
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore'
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore'
 import { ref, deleteObject } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import { FileUpload } from '@/components/FileUpload'
@@ -13,17 +12,18 @@ export default function Home() {
 
   useEffect(() => {
     const q = query(collection(db, 'files'), orderBy('createdAt', 'desc'))
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(
+      q,
       (querySnapshot) => {
-        const filesData = querySnapshot.docs.map(doc => ({
+        const filesData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }))
         setFiles(filesData)
         setError(null)
       },
       (err) => {
-        console.error("Error fetching files:", err)
+        console.error('Error fetching files:', err)
         setError(`Error fetching files: ${err.message}. Code: ${err.code}`)
       }
     )
@@ -34,13 +34,13 @@ export default function Home() {
   const handleDelete = async (fileId) => {
     try {
       const fileDoc = doc(db, 'files', fileId)
-      const fileData = files.find(file => file.id === fileId)
-      
+      const fileData = files.find((file) => file.id === fileId)
+
       if (fileData) {
         const storageRef = ref(storage, fileData.url)
         await deleteObject(storageRef)
       }
-      
+
       await deleteDoc(fileDoc)
     } catch (error) {
       console.error('Error deleting file:', error)
@@ -55,12 +55,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newName }),
       })
-  
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || 'Failed to rename file')
       }
-  
+
       setFiles((prevFiles) =>
         prevFiles.map((file) =>
           file.id === fileId ? { ...file, name: newName } : file
@@ -70,6 +70,41 @@ export default function Home() {
       console.error('Error renaming file:', error)
       throw error
     }
+  }
+
+  const handleSetPassword = async (fileId, password) => {
+    try {
+      const fileRef = doc(db, 'files', fileId)
+      await updateDoc(fileRef, { isLocked: true, password })
+      setFiles((prevFiles) =>
+        prevFiles.map((file) =>
+          file.id === fileId ? { ...file, isLocked: true, password } : file
+        )
+      )
+    } catch (error) {
+      console.error('Error setting password:', error)
+      setError(`Error setting password: ${error.message}. Code: ${error.code}`)
+    }
+  }
+
+  const handleRemovePassword = async (fileId, password) => {
+    try {
+      const fileRef = doc(db, 'files', fileId)
+      await updateDoc(fileRef, { isLocked: false, password })
+      setFiles((prevFiles) =>
+        prevFiles.map((file) =>
+          file.id === fileId ? { ...file, isLocked: true, password } : file
+        )
+      )
+    } catch (error) {
+      console.error('Error setting password:', error)
+      setError(`Error setting password: ${error.message}. Code: ${error.code}`)
+    }
+  }
+
+  const handleVerifyPassword = async (fileId, inputPassword) => {
+    const file = files.find((file) => file.id === fileId)
+    return file && file.password === inputPassword
   }
 
   return (
@@ -82,12 +117,18 @@ export default function Home() {
         </div>
       )}
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {files.map(file => (
-          <FileCard key={file.id} file={file} onDelete={handleDelete} onRename={handleRename} />
-
+        {files.map((file) => (
+          <FileCard
+            key={file.id}
+            file={file}
+            onDelete={handleDelete}
+            onRename={handleRename}
+            onSetPassword={handleSetPassword}
+            onRemovePassword = {handleRemovePassword }
+            onVerifyPassword={handleVerifyPassword}
+          />
         ))}
       </div>
     </div>
   )
 }
-
