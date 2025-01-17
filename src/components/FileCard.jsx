@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Trash, Edit, Save } from 'lucide-react'
+import { Trash, Edit, Save, Eye, Download } from 'lucide-react'
 
 export function FileCard({ file, onDelete, onRename }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -13,8 +13,19 @@ export function FileCard({ file, onDelete, onRename }) {
     setIsEditing(false)
   }
 
+  const handleView = () => {
+    window.open(file.url, '_blank')
+  }
+
+  const handleDownload = () => {
+    const link = document.createElement('a')
+    link.href = file.url
+    link.download = file.name
+    link.click()
+  }
+
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-md">
       <CardHeader>
         {isEditing ? (
           <div className="flex space-x-2">
@@ -53,7 +64,25 @@ export function FileCard({ file, onDelete, onRename }) {
           <span className="font-medium">Size:</span> {(file.size / 1024 / 1024).toFixed(2)} MB
         </p>
       </CardContent>
-      <CardFooter className="flex justify-between">
+      <CardFooter className="flex justify-between space-x-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleView}
+          className="flex items-center"
+        >
+          <Eye className="w-4 h-4 mr-1" />
+          View
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleDownload}
+          className="flex items-center"
+        >
+          <Download className="w-4 h-4 mr-1" />
+          Download
+        </Button>
         <Button
           variant="secondary"
           size="sm"
