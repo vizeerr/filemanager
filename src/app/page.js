@@ -116,7 +116,7 @@ export default function Home() {
           {error}
         </div>
       )}
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-16 grid lg:gap-10 md:gap-6 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {files.map((file) => (
           <FileCard
             key={file.id}

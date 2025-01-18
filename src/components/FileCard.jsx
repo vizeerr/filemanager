@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Trash, Edit, Save, Eye, Download, Lock, Unlock } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPassword,onRemovePassword }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -15,6 +16,11 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
   const [action, setAction] = useState(null)
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
+  const validatePassword = (password) => {
+    // Allow passwords with at least 8 characters (no upper limit), one uppercase letter, one lowercase letter, and one number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+  };
 
   const handleRename = () => {
     onRename(file.id, newName)
@@ -59,10 +65,9 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
     try {
       await onDelete(file.id)
       setDeleteDialogOpen(false)
-      alert('File deleted successfully!')
+      toast.success('File deleted successfully!')
     } catch (error) {
-      console.error('Error deleting file:', error)
-      alert('Failed to delete the file. Please try again.')
+      toast.error('Failed to delete the file. Please try again.')
     }
   }
 
@@ -71,42 +76,57 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
   }
 
   const promptForPassword = (onSuccess) => {
-    setAction(() => onSuccess)
-    setPasswordDialogOpen(true)
-  }
+    setAction(() => onSuccess);
+    setPasswordDialogOpen(true);
+  };
 
   const verifyPassword = async () => {
-    const isValid = await onVerifyPassword(file.id, inputPassword)
+    const isValid = await onVerifyPassword(file.id, inputPassword);
     if (isValid) {
-      setPasswordDialogOpen(false)
-      setInputPassword('')
-      if (action) action()
+      setPasswordDialogOpen(false);
+      setInputPassword('');
+      if (action) action();
     } else {
-      alert('Incorrect password. Please try again.')
+      toast.error('Incorrect password. Please try again.');
     }
-  }
+  };
+
 
   const handlePasswordSave = () => {
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!')
-      return
+    if (!validatePassword(password)) {
+      toast.error(
+        'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, and a number.'
+      );
+      return;
     }
-    onSetPassword(file.id, password)
-    setPassword('')
-    setConfirmPassword('')
-    setPasswordDialogOpen(false)
-  }
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match!');
+      return;
+    }
+    onSetPassword(file.id, password);
+    setPassword('');
+    setConfirmPassword('');
+    setPasswordDialogOpen(false);
+  };
 
   const handleRemovePassword = async () => {
     try {
-      await onRemovePassword(file.id, null) // Set password to null in the Firestore database
-      file.isLocked = false // Update local state
-      setPasswordDialogOpen(false) // Close the dialog
+      const isValid = await onVerifyPassword(file.id, inputPassword);
+      if (!isValid) {
+        toast.error('Incorrect password. Please try again.');
+        return;
+      }
+
+      await onRemovePassword(file.id, null); // Remove the password from the database
+      file.isLocked = false; // Update the local file state
+      setInputPassword(''); // Clear the input field
+      setPasswordDialogOpen(false); // Close the dialog
+      toast.success('Password removed successfully!');
     } catch (error) {
-      console.error('Error removing password:', error)
-      alert('Failed to remove password. Please try again.')
+    
+      toast.error('Failed to remove password. Please try again.');
     }
-  }
+  };
 
   return (
     <Card className="w-full max-w-sm">
@@ -237,10 +257,10 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
           )}
           <DialogFooter>
             <Button
-              variant="primary"
+              
               onClick={file.isLocked ? verifyPassword : handlePasswordSave}
             >
-              Save
+              {file.isLocked? "Unlock":"Lock"}
             </Button>
             {file.isLocked && (
               <Button
