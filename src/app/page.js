@@ -5,6 +5,8 @@ import { ref, deleteObject } from 'firebase/storage'
 import { db, storage } from '@/lib/firebase'
 import { FileUpload } from '@/components/FileUpload'
 import { FileCard } from '@/components/FileCard'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 export default function Home() {
   const [files, setFiles] = useState([])
@@ -116,6 +118,12 @@ export default function Home() {
           {error}
         </div>
       )}
+      {/* <div className='my-12'>
+      <Button>
+        <Plus/>
+        Make Group
+      </Button>
+      </div> */}
       <div className="mt-16 grid lg:gap-10 md:gap-6 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {files.map((file) => (
           <FileCard

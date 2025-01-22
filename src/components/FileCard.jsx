@@ -156,6 +156,9 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
           <span className="font-medium">Size:</span> {(file.size / 1024 / 1024).toFixed(2)} MB
         </p>
         <p className="text-sm text-muted-foreground">
+          <span className="font-medium">Uploaded On:</span> {file.createdAt?.toDate().toLocaleString()}
+        </p>
+        <p className="text-sm text-muted-foreground">
           <span className="font-medium">Lifetime:</span>{' '}
           {file.lifetime === 'lifetime'
             ? 'Permanent'
@@ -165,6 +168,10 @@ export function FileCard({ file, onDelete, onRename, onSetPassword, onVerifyPass
             ? '1 Week'
             : file.lifetime === '1m'
             ? '1 Month'
+            : file.lifetime === '1hr'
+            ? '1 Hour'
+            : file.lifetime === '30min'
+            ? '30 Minutes'
             : 'Unknown'}
         </p>
         <p className="text-sm text-muted-foreground">

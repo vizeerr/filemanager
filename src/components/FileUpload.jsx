@@ -18,6 +18,9 @@ export function FileUpload({ onUploadSuccess }) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({})
   const [applySameLifetime, setApplySameLifetime] = useState(false)
+  const [makeGroup, setMakeGroup] = useState(false)
+  const[folderName,setFolderName] = useState('')
+
   const [defaultLifetime, setDefaultLifetime] = useState('lifetime')
   const [uploadError, setUploadError] = useState(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
@@ -27,6 +30,8 @@ export function FileUpload({ onUploadSuccess }) {
     { value: '1d', label: '1 Day' },
     { value: '1w', label: '1 Week' },
     { value: '1m', label: '1 Month' },
+    { value: '1hr', label: '1 Hour' },
+    { value: '30min', label: '30 Minutes' },
     { value: 'lifetime', label: 'Lifetime (Permanent)' },
   ]
 
@@ -53,6 +58,11 @@ export function FileUpload({ onUploadSuccess }) {
     if (files.length === 0) {
       setUploadError('Please select files to upload.')
       return
+
+    }
+    if (makeGroup && !folderName.trim()) {
+      setUploadError('Please provide a valid folder name.');
+      return;
     }
 
     setUploading(true)
@@ -62,38 +72,42 @@ export function FileUpload({ onUploadSuccess }) {
 
     try {
       for (const [index, { file, lifetime }] of files.entries()) {
-        const storageRef = ref(storage, `uploads/${file.name}`)
-        const uploadTask = uploadBytesResumable(storageRef, file)
+         const folderPath = 'uploads';
+        const storageRef = ref(storage, `${folderPath}/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
 
         uploadTask.on(
           'state_changed',
           (snapshot) => {
             const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-            newProgress[index] = progress
-            setUploadProgress({ ...newProgress })
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            newProgress[index] = progress;
+            setUploadProgress({ ...newProgress });
           },
           (error) => {
-            console.error('Upload failed:', error)
-            setUploadError(`Upload failed: ${error.message}`)
+            console.error('Upload failed:', error);
+            setUploadError(`Upload failed: ${error.message}`);
           },
           async () => {
             try {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref)
-              const docRef = await addDoc(collection(db, 'files'), {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+              // Save file metadata to Firestore
+              await addDoc(collection(db, 'files'), {
                 name: file.name,
                 size: file.size,
                 type: file.type,
                 url: downloadURL,
-                lifetime,  // Ensure the correct lifetime is saved here
+                lifetime,
+                folder: makeGroup ? folderName.trim() : null, // Save folder name
                 createdAt: new Date(),
-              })
+              });
 
-              setUploadSuccess(true)
-              onUploadSuccess()
+              setUploadSuccess(true);
+              onUploadSuccess();
             } catch (error) {
-              console.error('Failed to save file metadata:', error)
-              setUploadError(`Failed to save file metadata: ${error.message}`)
+              console.error('Failed to save file metadata:', error);
+              setUploadError(`Failed to save file metadata: ${error.message}`);
             }
           }
         )
@@ -160,7 +174,8 @@ export function FileUpload({ onUploadSuccess }) {
           ))}
         </div>
       )}
-      {files.length > 0 && (
+      {files.length > 1 && (
+        <>
         <div className="flex items-center space-x-4">
           <label className="flex items-center text-sm">
             <input
@@ -214,6 +229,29 @@ export function FileUpload({ onUploadSuccess }) {
             </select>
           )}
         </div>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center text-sm w-full">
+            <input
+              type="checkbox"
+              className="mr-2"
+              checked={makeGroup}
+              onChange={(e) => {
+                const isChecked = e.target.checked
+                setMakeGroup(isChecked)
+
+              }}
+            />
+            Make Folder
+          </label>
+          {makeGroup &&(
+            <Input
+            placeholder="Enter Folder Name"
+            value={folderName}
+            onChange={(e) => setFolderName(e.target.value)}
+            aria-label="Folder Name"
+          />)}
+        </div>
+        </>
       )}
       <Button
         onClick={handleUpload}
